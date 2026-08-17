@@ -1,0 +1,82 @@
+@import "tailwindcss";
+@import "@heroui/styles"; 
+/* ---------------------------------------------------------------------- */
+/* UNAC — Design Tokens (Tailwind v4 @theme)                              */
+/* ---------------------------------------------------------------------- */
+@theme {
+  /* Color: navy institucional + dorado, no la paleta AI-default */
+  --color-navy-950: #050b14;
+  --color-navy-900: #0b1f3a;
+  --color-navy-850: #0e2547;
+  --color-navy-800: #122c52;
+  --color-navy-700: #1a3a68;
+  --color-navy-600: #234a80;
+
+  --color-gold-600: #b3860f;
+  --color-gold-500: #d4a62a;
+  --color-gold-400: #e0b94a;
+  --color-gold-300: #e8c765;
+
+  --color-paper: #f7f5ef;
+  --color-paper-dim: #efece2;
+  --color-ink: #10131a;
+  --color-ink-soft: #40465a;
+
+  --color-sky-500: #4c86b8;
+
+  /* Tipografía */
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Inter", "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: var(--color-gold-400);
+    color: var(--color-navy-950);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .grain {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
