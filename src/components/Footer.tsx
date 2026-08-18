@@ -1,4 +1,3 @@
-import { Button } from "@heroui/react";
 
 const COLUMNS: { title: string; links: string[] }[] = [
   {
@@ -7,11 +6,21 @@ const COLUMNS: { title: string; links: string[] }[] = [
   },
   {
     title: "Programas",
-    links: ["Proceso paso a paso", "Becas y financiación", "Calendario académico", "Preguntas frecuentes"],
+    links: [
+      "Proceso paso a paso",
+      "Becas y financiación",
+      "Calendario académico",
+      "Preguntas frecuentes",
+    ],
   },
   {
     title: "Admisiones",
-    links: ["Proceso paso a paso", "Becas y financiación", "Calendario académico", "Preguntas frecuentes"],
+    links: [
+      "Proceso paso a paso",
+      "Becas y financiación",
+      "Calendario académico",
+      "Preguntas frecuentes",
+    ],
   },
   {
     title: "Vida UNAC",
@@ -35,16 +44,13 @@ export default function Footer() {
               Universidad Adventista de Colombia. Formación integral: mente,
               cuerpo y espíritu, al servicio de tu vocación.
             </p>
-            <Button
-              as="a"
+            <a
               href="#admisiones"
-              radius="full"
-              size="sm"
-              className="mt-5 bg-gold-500 font-medium text-navy-950 hover:bg-gold-400"
+              className="mt-5 inline-flex items-center justify-center px-4 py-2 rounded-full bg-gold-500 font-medium text-navy-950 hover:bg-gold-400 text-sm"
             >
               Inicia tu admisión
-            </Button>
-          </div>     
+            </a>
+          </div>
 
           {COLUMNS.map((col) => (
             <div key={col.title}>
@@ -65,13 +71,22 @@ export default function Footer() {
           ))}
         </div>
 
-    
         <div className="flex flex-col items-start justify-between gap-4 text-xs text-paper/40 md:flex-row md:items-center">
-          <p>© {new Date().getFullYear()} Universidad Adventista de Colombia (UNAC). Todos los derechos reservados.</p>
+          <p>
+            © {new Date().getFullYear()} Universidad Adventista de Colombia
+            (UNAC). Todos los derechos reservados.
+          </p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-gold-300">Términos</a>
-            <a href="#" className="hover:text-gold-300">Privacidad</a>
-            <a href="mailto:admisiones@unac.edu.co" className="hover:text-gold-300">
+            <a href="#" className="hover:text-gold-300">
+              Términos
+            </a>
+            <a href="#" className="hover:text-gold-300">
+              Privacidad
+            </a>
+            <a
+              href="mailto:admisiones@unac.edu.co"
+              className="hover:text-gold-300"
+            >
               admisiones@unac.edu.co
             </a>
           </div>

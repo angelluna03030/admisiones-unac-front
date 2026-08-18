@@ -34,12 +34,10 @@ const DRIFT_TILES: DriftTile[] = [
 
 export default function Hero() {
   const scrollToAdmissions = () => {
-    document
-      .getElementById("admisiones")
-      ?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    document.getElementById("admisiones")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   return (
@@ -48,10 +46,7 @@ export default function Hero() {
       className="relative flex min-h-screen flex-col overflow-hidden bg-navy-950"
     >
       {/* Fondo */}
-      <DriftWall
-        tiles={DRIFT_TILES}
-        columns={6}
-      />
+      <DriftWall tiles={DRIFT_TILES} columns={6} />
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-navy-950/40 via-navy-950/70 to-navy-950" />
 
@@ -73,10 +68,7 @@ export default function Hero() {
         </a>
 
         {/* Navegación */}
-        <GooeyNav
-          items={NAV_ITEMS}
-          className="hidden md:flex"
-        />
+        <GooeyNav items={NAV_ITEMS} className="hidden md:flex" />
 
         {/* CTA */}
         <Button
@@ -157,47 +149,32 @@ export default function Hero() {
             Comenzar mi admisión
           </Button>
 
-          <Button
-            as="a"
+          <a
             href="#programas"
-            variant="bordered"
-            size="lg"
-            className="border-paper/30 px-8 font-medium text-paper hover:border-gold-400 hover:text-gold-300"
+            className="border-paper/30 px-8 font-medium text-paper hover:border-gold-400 hover:text-gold-300 border rounded-lg inline-flex items-center justify-center h-12"
           >
             Ver programas académicos
-          </Button>
+          </a>
         </div>
 
         {/* Estadísticas */}
         <dl className="mt-14 grid w-full max-w-2xl grid-cols-3 gap-6 border-t border-paper/10 pt-6">
           <div>
-            <dt className="eyebrow text-gold-300/70">
-              Facultades
-            </dt>
+            <dt className="eyebrow text-gold-300/70">Facultades</dt>
 
-            <dd className="mt-1 font-display text-2xl text-paper">
-              4
-            </dd>
+            <dd className="mt-1 font-display text-2xl text-paper">4</dd>
           </div>
 
           <div>
-            <dt className="eyebrow text-gold-300/70">
-              Egresados vinculados
-            </dt>
+            <dt className="eyebrow text-gold-300/70">Egresados vinculados</dt>
 
-            <dd className="mt-1 font-display text-2xl text-paper">
-              92%
-            </dd>
+            <dd className="mt-1 font-display text-2xl text-paper">92%</dd>
           </div>
 
           <div>
-            <dt className="eyebrow text-gold-300/70">
-              Becas disponibles
-            </dt>
+            <dt className="eyebrow text-gold-300/70">Becas disponibles</dt>
 
-            <dd className="mt-1 font-display text-2xl text-paper">
-              20–100%
-            </dd>
+            <dd className="mt-1 font-display text-2xl text-paper">20–100%</dd>
           </div>
         </dl>
       </div>
