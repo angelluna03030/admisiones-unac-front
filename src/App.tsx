@@ -8,14 +8,9 @@ import { AspirantesPage } from './pages/AspirantesPage';
 import { UsuariosPage } from './pages/UsuariosPage';
 // Layout
 import { MainLayout } from './components/common/MainLayout';
+import { DashboardPage } from './pages/DashboardPage';
 
-// Placeholder para el Dashboard (puedes crear este archivo o usar el que ya tengas)
-const Dashboard = () => (
-  <div className="p-8">
-    <h1 className="text-3xl font-bold">Bienvenido al Dashboard de Admisiones</h1>
-    <p className="text-default-500 mt-2">Selecciona una opción del menú lateral.</p>
-  </div>
-);
+
 
 // Placeholder para Página no encontrada
 const PageNotFound = () => (
@@ -38,9 +33,9 @@ export default function App() {
 
         {/* 2. Rutas de la Aplicación (Con Layout Sencillo, SIN protección) */}
         <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          
+
           {/* Ruta de Programas Académicos */}
+           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/programas" element={<ProgramasPage />} />
           <Route path="/aspirantes" element={<AspirantesPage />} />
            <Route path="/usuarios" element={<UsuariosPage />} />

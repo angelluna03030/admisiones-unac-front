@@ -1,14 +1,16 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import {
   Button,
+  FieldError,
   Input,
   Label,
   ListBox,
   Modal,
-
   Select,
+  TextField,
 } from "@heroui/react";
-
+import { usePrograma } from "../hooks/usePrograma"; 
+import { aspiranteApi } from "../api/aspirante";   
 import ScrollExpand, { type ScrollExpandItem } from "./ui/ScrollExpand";
 
 const STEPS: ScrollExpandItem[] = [
@@ -38,81 +40,81 @@ const STEPS: ScrollExpandItem[] = [
   },
 ];
 
-const PROGRAMS = [
-  { key: "ing-sistemas", label: "Ingeniería de Sistemas" },
-  { key: "ing-industrial", label: "Ingeniería Industrial" },
-  { key: "enfermeria", label: "Enfermería" },
-  { key: "nutricion", label: "Nutrición y Dietética" },
-  { key: "teologia", label: "Teología" },
-  { key: "ministerio-pastoral", label: "Ministerio Pastoral" },
-  {
-    key: "edu-infantil",
-    label: "Licenciatura en Educación Infantil",
-  },
-  {
-    key: "edu-teologica",
-    label: "Licenciatura en Teología y Educación Cristiana",
-  },
-];
-
 interface FormState {
-  fullName: string;
+  nombres: string;
+  apellidos: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
   email: string;
   phone: string;
-  program: string;
+  programaId: string;
 }
 
 const INITIAL_STATE: FormState = {
-  fullName: "",
+  nombres: "",
+  apellidos: "",
+  tipoDocumento: "CC",
+  numeroDocumento: "",
   email: "",
   phone: "",
-  program: "",
+  programaId: "",
 };
 
 export default function AdmissionForm() {
-
-
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
-  const [submitted, setSubmitted] = useState<FormState | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { programas, fetchProgramas } = usePrograma();
 
+  useEffect(() => {
+  fetchProgramas({ page: 1, limit: 100 }); // o el límite que uses
+}, []);
   const handleChange = (field: keyof FormState) => (value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    setSubmitted(form);
-    setForm(INITIAL_STATE);
+    try {
+      const payload = {
+        nombres: form.nombres,
+        apellidos: form.apellidos,
+        tipoDocumento: form.tipoDocumento,
+        numeroDocumento: form.numeroDocumento,
+        correo: form.email,
+        telefono: form.phone,
+        direccion: `Interesado en programa ID: ${form.programaId}`, 
+        ciudad: "Pre-inscripción Web",
+      };
+
+      await aspiranteApi.create(payload);
+      
+      setIsModalOpen(true);
+      setForm(INITIAL_STATE);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Error al pre-inscribir:", error);
+      alert(error.response?.data?.message || "Hubo un error al enviar la pre-inscripción. Intenta de nuevo.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // ✅ FILTRO: Solo mostramos programas que estén activos
+const programasActivos = programas.filter((prog) => prog.activo !== false);
   return (
     <section id="admisiones" className="bg-navy-900 px-6 py-24 md:px-12">
       <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1fr_1fr]">
         {/* Proceso paso a paso */}
         <div>
           <span className="eyebrow text-gold-300">Proceso de admisión</span>
-
           <h2 className="mt-2 font-display text-3xl text-paper md:text-4xl">
             Cuatro pasos entre tú y tu carné UNAC.
           </h2>
-
-          <div
-            className="
-              mt-10
-              [&_.eyebrow]:text-gold-300
-              [&_h3]:text-paper
-              [&_p]:text-paper/70
-              [&_.bg-white\\/70]:bg-navy-800/60
-              [&_.border-navy-800\\/10]:border-paper/10
-              [&_.border-navy-800\\/25]:border-paper/20
-              [&_.text-navy-800\\/40]:text-paper/40
-              [&_.bg-paper]:bg-navy-900
-            "
-          >
+          <div className="mt-10 [&_.eyebrow]:text-gold-300 [&_h3]:text-paper [&_p]:text-paper/70 [&_.bg-white\/70]:bg-navy-800/60 [&_.border-navy-800\/10]:border-paper/10 [&_.border-navy-800\/25]:border-paper/20 [&_.text-navy-800\/40]:text-paper/40 [&_.bg-paper]:bg-navy-900">
             <ScrollExpand items={STEPS} />
           </div>
         </div>
@@ -120,121 +122,159 @@ export default function AdmissionForm() {
         {/* Formulario de pre-inscripción */}
         <div className="rounded-3xl border border-paper/10 bg-navy-800/50 p-6 md:p-8">
           <span className="eyebrow text-gold-300">Pre-inscripción</span>
+          <h3 className="mt-2 font-display text-2xl text-paper">Empieza tu proceso hoy</h3>
+          <p className="mt-2 text-sm text-paper/60">Sin costo, sin compromiso. Un asesor te contactará muy pronto.</p>
+<form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <TextField isRequired>
+      <Label className="text-paper/70">Nombres</Label>
+      <Input
+        placeholder="Ej: María Fernanda"
+        value={form.nombres}
+        onChange={(e) => handleChange("nombres")(e.target.value)}
+        variant="secondary"
+        className="text-black"
+      />
+      <FieldError />
+    </TextField>
 
-          <h3 className="mt-2 font-display text-2xl text-paper">
-            Empieza tu proceso hoy
-          </h3>
+    <TextField isRequired>
+      <Label className="text-paper/70">Apellidos</Label>
+      <Input
+        placeholder="Ej: Rojas López"
+        value={form.apellidos}
+        onChange={(e) => handleChange("apellidos")(e.target.value)}
+        variant="secondary"
+        className="text-black"
+      />
+      <FieldError />
+    </TextField>
+  </div>
 
-          <p className="mt-2 text-sm text-paper/60">
-            Sin costo, sin compromiso. Un asesor te contactará muy pronto.
-          </p>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <Select
+      isRequired
+      value={form.tipoDocumento || null}
+      onChange={(value) => value && handleChange("tipoDocumento")(value as string)}
+    >
+      <Label className="text-paper/70">Tipo de Doc.</Label>
+      <Select.Trigger className="text-black">
+        <Select.Value />
+        <Select.Indicator />
+      </Select.Trigger>
+      <Select.Popover>
+        <ListBox>
+          <ListBox.Item id="CC" textValue="Cédula de Ciudadanía">
+            Cédula de Ciudadanía
+            <ListBox.ItemIndicator />
+          </ListBox.Item>
+          <ListBox.Item id="TI" textValue="Tarjeta de Identidad">
+            Tarjeta de Identidad
+            <ListBox.ItemIndicator />
+          </ListBox.Item>
+          <ListBox.Item id="CE" textValue="Cédula de Extranjería">
+            Cédula de Extranjería
+            <ListBox.ItemIndicator />
+          </ListBox.Item>
+          <ListBox.Item id="PAS" textValue="Pasaporte">
+            Pasaporte
+            <ListBox.ItemIndicator />
+          </ListBox.Item>
+        </ListBox>
+      </Select.Popover>
+    </Select>
 
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-            {/* Nombre */}
-            <Input
-              placeholder="Ej: María Fernanda Rojas"
-              value={form.fullName}
-      
-                    onChange={(e) => handleChange("fullName")(e.target.value)}
-              variant="secondary"
-            />
+    <TextField isRequired className="md:col-span-2">
+      <Label className="text-paper/70">Número de Documento</Label>
+      <Input
+        placeholder="Ej: 1234567890"
+        value={form.numeroDocumento}
+        onChange={(e) => handleChange("numeroDocumento")(e.target.value)}
+        variant="secondary"
+        className="text-black"
+      />
+      <FieldError />
+    </TextField>
+  </div>
 
-            {/* Correo */}
-            <Input
-              type="email"
-              placeholder="tucorreo@ejemplo.com"
-              value={form.email}
-            
-                 onChange={(e) => handleChange("email")(e.target.value)}
-              variant="primary"
-            />
+  <TextField isRequired>
+    <Label className="text-paper/70">Correo Electrónico</Label>
+    <Input
+      type="email"
+      placeholder="tucorreo@ejemplo.com"
+      value={form.email}
+      onChange={(e) => handleChange("email")(e.target.value)}
+      variant="secondary"
+      className="text-black"
+    />
+    <FieldError />
+  </TextField>
 
-            {/* Teléfono */}
-            <Input
-              type="tel"
-              placeholder="Ej: 300 123 4567"
-              value={form.phone}
-            
-                onChange={(e) => handleChange("phone")(e.target.value)}
-              variant="secondary"
-            />
+  <TextField isRequired>
+    <Label className="text-paper/70">Teléfono / WhatsApp</Label>
+    <Input
+      type="tel"
+      placeholder="Ej: 300 123 4567"
+      value={form.phone}
+      onChange={(e) => handleChange("phone")(e.target.value)}
+      variant="secondary"
+      className="text-black"
+    />
+    <FieldError />
+  </TextField>
 
-            {/* Programa */}
-            <Select
-              className="w-full"
-              isRequired
-              placeholder="Selecciona un programa"
-              value={form.program}
-              onChange={(value) => handleChange("program")(value as string)}
-            >
-              <Label className="text-paper/70">Programa académico</Label>
+  <Select
+    isRequired
+    value={form.programaId || null}
+    onChange={(value) => value && handleChange("programaId")(value as string)}
+  >
+    <Label className="text-paper/70">Programa Académico de Interés</Label>
+    <Select.Trigger className="text-black">
+      <Select.Value />
+      <Select.Indicator />
+    </Select.Trigger>
+    <Select.Popover>
+      <ListBox>
+        {programasActivos.map((prog) => (
+          <ListBox.Item key={prog.id} id={prog.id} textValue={prog.nombre}>
+            {prog.nombre}
+            <ListBox.ItemIndicator />
+          </ListBox.Item>
+        ))}
+      </ListBox>
+    </Select.Popover>
+  </Select>
 
-              <Select.Trigger
-                className="
-                  border-paper/20
-                  hover:border-gold-400
-                "
-              >
-                <Select.Value className="text-paper" />
-                <Select.Indicator />
-              </Select.Trigger>
+  <Button
+    type="submit"
+    isDisabled={isSubmitting}
+    className="mt-4 h-12 px-6 text-base bg-gold-500 font-medium text-navy-950 hover:bg-gold-400"
+  >
+    Enviar pre-inscripción
+  </Button>
+</form>
+        </div>
+      </div>
 
-              <Select.Popover>
-                <ListBox>
-                  {PROGRAMS.map((program) => (
-                    <ListBox.Item
-                      key={program.key}
-                      id={program.key}
-                      textValue={program.label}
-                    >
-                      {program.label}
-
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-<Modal>
-        <Button
-          type="submit"
-          size="lg"
-          className="
-                mt-2
-                bg-gold-500
-                font-medium
-                text-navy-950
-                hover:bg-gold-400
-              "
-        >
-          Enviar pre-inscripción
-        </Button>
+      {/* Modal de Confirmación */}
+      <Modal isOpen={isModalOpen} onOpenChange={setIsModalOpen}  >
         <Modal.Backdrop>
           <Modal.Container>
-            <Modal.Dialog className="sm:max-w-[360px]">
+            <Modal.Dialog>
               <Modal.CloseTrigger />
               <Modal.Header>
-                <Modal.Icon className="bg-default text-foreground"></Modal.Icon>
-                <Modal.Heading> ¡Recibimos tu pre-inscripción!</Modal.Heading>
+                <Modal.Heading className="text-foreground">¡Pre-inscripción Recibida!</Modal.Heading>
               </Modal.Header>
               <Modal.Body>
-                <p className="text-sm text-ink-soft">
-                  Gracias
-                  {submitted?.fullName ? `, ${submitted.fullName}` : ""}. Un
-                  asesor de Admisiones UNAC se pondrá en contacto contigo muy
-                  pronto
-                  {submitted?.email ? ` al correo ${submitted.email}` : ""}.
+                <p className="text-sm text-default-600">
+                  Gracias{form.nombres ? `, ${form.nombres}` : ""}. Un asesor de Admisiones UNAC se pondrá en contacto contigo muy pronto{form.email ? ` al correo ${form.email}` : ""}.
                 </p>
               </Modal.Body>
               <Modal.Footer>
                 <Button
-                  className="
-                    bg-gold-500
-                    font-medium
-                    text-navy-950
-                    hover:bg-gold-400
-                  "
-                 slot="close"
+              
+                  className="bg-gold-500 text-navy-950 hover:bg-gold-400"
+                  onPress={() => setIsModalOpen(false)}
                 >
                   Entendido
                 </Button>
@@ -243,12 +283,6 @@ export default function AdmissionForm() {
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
-            {/* Enviar */}
-          </form>
-        </div>
-      </div>
-      
-      {/* Confirmación */}
     </section>
   );
 }
