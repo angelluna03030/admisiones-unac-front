@@ -5,6 +5,7 @@ import './index.css';
 import AdmissionsLanding from './pages/AdmissionsLanding';
 import { ProgramasPage } from './pages/ProgramasPage'; // La que acabamos de crear
 import { AspirantesPage } from './pages/AspirantesPage';
+import { UsuariosPage } from './pages/UsuariosPage';
 // Layout
 import { MainLayout } from './components/common/MainLayout';
 
@@ -42,6 +43,7 @@ export default function App() {
           {/* Ruta de Programas Académicos */}
           <Route path="/programas" element={<ProgramasPage />} />
           <Route path="/aspirantes" element={<AspirantesPage />} />
+           <Route path="/usuarios" element={<UsuariosPage />} />
           {/* Aquí agregaremos más rutas en el futuro: */}
           {/* <Route path="/aspirantes" element={<AspirantesPage />} /> */}
           {/* <Route path="/solicitudes" element={<SolicitudesPage />} /> */}

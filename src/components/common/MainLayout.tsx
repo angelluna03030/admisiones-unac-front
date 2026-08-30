@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { BookOpen, LayoutDashboard, Users } from 'lucide-react';
+import { BookOpen, LayoutDashboard, UserCog, Users } from 'lucide-react';
 
 export const MainLayout = () => {
   const location = useLocation();
@@ -47,6 +47,15 @@ export const MainLayout = () => {
             <Users size={20} />
             Aspirantes
           </Link>
+          <Link 
+  to="/usuarios" 
+  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+    isActive('/usuarios') ? 'bg-primary-100 text-primary-600 font-medium' : 'text-default-600 hover:bg-default-100'
+  }`}
+>
+  <UserCog size={20} />
+  Usuarios
+</Link>
           {/* Aquí irán los futuros enlaces: Aspirantes, Solicitudes, etc. */}
         </nav>
       </aside>
