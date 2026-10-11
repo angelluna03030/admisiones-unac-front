@@ -55,6 +55,7 @@ export const UsuarioModal = ({ isOpen, onClose }: UsuarioModalProps) => {
           correo: selectedUsuario.correo,
           rol: selectedUsuario.rol,
           activo: selectedUsuario.activo,
+          password: '',
         });
       } else {
         setFormData({
@@ -63,6 +64,7 @@ export const UsuarioModal = ({ isOpen, onClose }: UsuarioModalProps) => {
           correo: '',
           rol: 'ADMISIONES',
           activo: true,
+          password: '',
         });
       }
       setErrors({});
@@ -82,7 +84,9 @@ export const UsuarioModal = ({ isOpen, onClose }: UsuarioModalProps) => {
   };
 
   const handleSubmit = async () => {
-    const validation = createUsuarioSchema.safeParse(formData);
+    // La contraseña vacía significa "no asignar / no cambiar"
+    const payload = { ...formData, password: formData.password || undefined };
+    const validation = createUsuarioSchema.safeParse(payload);
     if (!validation.success) {
       const fieldErrors: Record<string, string> = {};
       validation.error.issues.forEach((issue) => {
@@ -94,12 +98,12 @@ export const UsuarioModal = ({ isOpen, onClose }: UsuarioModalProps) => {
     setIsSubmitting(true);
     try {
       if (isEditing && selectedUsuario) {
-        await updateUsuario(selectedUsuario.id, formData);
+        await updateUsuario(selectedUsuario.id, payload);
         toast.success('Usuario actualizado', {
           description: 'Los cambios se guardaron correctamente.',
         });
       } else {
-        await createUsuario(formData);
+        await createUsuario(payload);
         toast.success('Usuario creado', {
           description: 'El usuario se registró en el sistema.',
         });
@@ -182,6 +186,25 @@ export const UsuarioModal = ({ isOpen, onClose }: UsuarioModalProps) => {
                   </Select.Popover>
                   <FieldError>{errors.rol}</FieldError>
                 </Select>
+
+                <TextField isInvalid={!!errors.password}>
+                  <Label>{isEditing ? 'Nueva contraseña' : 'Contraseña de acceso'}</Label>
+                  <Input
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder={isEditing ? 'Déjala vacía para no cambiarla' : 'Opcional: sin ella no podrá iniciar sesión'}
+                    value={formData.password ?? ''}
+                    onChange={(e) => handleChange('password', e.target.value)}
+                  />
+                  <FieldError>{errors.password}</FieldError>
+                </TextField>
+                {isEditing && selectedUsuario && (
+                  <p className="-mt-2 text-xs text-default-500">
+                    {selectedUsuario.tieneAcceso
+                      ? 'Este usuario ya tiene contraseña asignada.'
+                      : 'Este usuario aún no tiene contraseña: asígnale una para que pueda entrar.'}
+                  </p>
+                )}
 
                 <Switch isSelected={formData.activo} onChange={(val) => handleChange('activo', val)}>
                   <Switch.Control className="data-[selected]:bg-success">

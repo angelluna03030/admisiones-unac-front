@@ -21,7 +21,11 @@ const columns = [
   { id: "acciones", name: "Acciones" },
 ];
 
-export const TablaProgramas = () => {
+interface TablaProgramasProps {
+  onEdit: (programa: ProgramaAcademico) => void;
+}
+
+export const TablaProgramas = ({ onEdit }: TablaProgramasProps) => {
   const {
     programas,
     total,
@@ -30,7 +34,6 @@ export const TablaProgramas = () => {
     isLoading,
     fetchProgramas,
     toggleStatus,
-    setSelectedPrograma,
   } = usePrograma();
 
   useEffect(() => {
@@ -161,9 +164,7 @@ export const TablaProgramas = () => {
                         variant="outline"
                       
                         aria-label={`Editar ${programa.nombre}`}
-                        onPress={() =>
-                          setSelectedPrograma(programa)
-                        }
+                        onPress={() => onEdit(programa)}
                       >
                         <Edit size={16} />
                       </Button>

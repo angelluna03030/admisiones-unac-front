@@ -3,6 +3,7 @@ import { Edit, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useUsuario } from '../../../hooks/useUsuario';
 import type { Usuario } from '../../../types/Usuario';
+import { formatDateTime } from '../../../utils/format';
 
 // 1. Definimos las props que recibe la tabla
 interface TablaUsuariosProps {
@@ -57,6 +58,7 @@ export const TablaUsuarios = ({ onEdit }: TablaUsuariosProps) => {
     { id: 'correo', label: 'Correo' },
     { id: 'rol', label: 'Rol' },
     { id: 'estado', label: 'Estado' },
+    { id: 'acceso', label: 'Acceso' },
     { id: 'acciones', label: 'Acciones' },
   ];
 
@@ -114,6 +116,18 @@ export const TablaUsuarios = ({ onEdit }: TablaUsuariosProps) => {
                       {item.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
+                </Table.Cell>
+                <Table.Cell>
+                  {item.tieneAcceso ? (
+                    <div className="flex flex-col">
+                      <span className="text-sm">Con contraseña</span>
+                      <span className="text-xs text-default-500">
+                        {item.ultimoAcceso ? `Último acceso: ${formatDateTime(item.ultimoAcceso)}` : 'Nunca ha entrado'}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-warning">Sin contraseña</span>
+                  )}
                 </Table.Cell>
                 <Table.Cell>
                   <div className="flex items-center gap-2">

@@ -4,8 +4,11 @@ import { Button, Input } from '@heroui/react';
 import { TablaProgramas } from '../components/ui/programas/TablaProgramas';
 import { ProgramaModal } from '../components/ui/programas/ProgramaModal';
 import { usePrograma } from '../hooks/usePrograma';
+import { useAuthStore } from '../stores/authStore';
+import { puede } from '../utils/permisos';
 
 export const ProgramasPage = () => {
+  const rol = useAuthStore((state) => state.usuario?.rol);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -40,10 +43,12 @@ export const ProgramasPage = () => {
             </p>
           </div>
         </div>
-        <Button   onPress={handleOpenCreate}>
-            <Plus size={18} />
-          Nuevo Programa
-        </Button>
+        {puede(rol, 'programas') && (
+          <Button   onPress={handleOpenCreate}>
+              <Plus size={18} />
+            Nuevo Programa
+          </Button>
+        )}
       </div>
 
       {/* Filtros */}
@@ -59,11 +64,22 @@ export const ProgramasPage = () => {
 
       {/* Tabla */}
       <div className="bg-background rounded-xl border border-default-200 p-4">
-        <TablaProgramas />
+        <TablaProgramas
+          onEdit={(programa) => {
+            setSelectedPrograma(programa);
+            setIsModalOpen(true);
+          }}
+        />
       </div>
 
       {/* Modal */}
-      <ProgramaModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <ProgramaModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPrograma(null);
+        }}
+      />
     </div>
   );
 };

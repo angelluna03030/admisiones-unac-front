@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useEnVista } from "../../hooks/useEnVista";
 
 export interface DriftTile {
   label: string;
@@ -26,7 +27,8 @@ export default function DriftWall({
   className = "",
 }: DriftWallProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [pointer, setPointer] = useState({ x: 0, y: 0 });
+  // Las animaciones se pausan cuando el hero no se ve o la pestaña está en segundo plano
+  const visible = useEnVista(wrapperRef);
 
   // Cada tile obtiene parámetros de deriva pseudoaleatorios pero estables
   const driftConfig = useMemo(
@@ -48,21 +50,31 @@ export default function DriftWall({
     const el = wrapperRef.current;
     if (!el) return;
 
+    // El parallax se escribe en variables CSS (sin re-render de React) y como máximo una vez por frame
+    let frame: number | null = null;
     const handleMove = (e: MouseEvent) => {
-      const box = el.getBoundingClientRect();
-      const x = (e.clientX - box.left) / box.width - 0.5; // -0.5 a 0.5
-      const y = (e.clientY - box.top) / box.height - 0.5;
-      setPointer({ x, y });
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        const box = el.getBoundingClientRect();
+        if (box.bottom < 0) return; // el hero ya no se ve
+        el.style.setProperty("--pointer-x", String((e.clientX - box.left) / box.width - 0.5)); // -0.5 a 0.5
+        el.style.setProperty("--pointer-y", String((e.clientY - box.top) / box.height - 0.5));
+      });
     };
 
-    window.addEventListener("mousemove", handleMove);
-    return () => window.removeEventListener("mousemove", handleMove);
+    window.addEventListener("mousemove", handleMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (
     <div
       ref={wrapperRef}
       className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}
+      data-paused={!visible}
       aria-hidden="true"
     >
       <div
@@ -73,8 +85,7 @@ export default function DriftWall({
       >
         {tiles.map((tile, i) => {
           const cfg = driftConfig[i];
-          const parallaxX = pointer.x * 24 * cfg.depth;
-          const parallaxY = pointer.y * 24 * cfg.depth;
+          const intensidad = 24 * cfg.depth;
 
           return (
             // Capa externa: solo parallax (sigue al mouse).
@@ -83,7 +94,7 @@ export default function DriftWall({
             <div
               key={`${tile.label}-${i}`}
               style={{
-                transform: `translate(${parallaxX}px, ${parallaxY}px)`,
+                transform: `translate(calc(var(--pointer-x, 0) * ${intensidad}px), calc(var(--pointer-y, 0) * ${intensidad}px))`,
                 transition: "transform 700ms ease-out",
               }}
             >
@@ -120,6 +131,9 @@ export default function DriftWall({
           animation-name: unac-drift;
           animation-timing-function: ease-in-out;
           animation-iteration-count: infinite;
+        }
+        [data-paused="true"] .drift-tile {
+          animation-play-state: paused;
         }
       `}</style>
     </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEnVista } from '../../hooks/useEnVista';
 import type { CSSProperties } from 'react';
 
 export interface DriftWallItem {
@@ -99,6 +100,8 @@ const DriftWall = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeIdRef = useRef<string | null>(null);
   const [reduced, setReduced] = useState(false);
+  // El bucle de animación solo corre mientras la sección se ve y la pestaña está activa
+  const visible = useEnVista(containerRef, '200px');
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -159,6 +162,7 @@ const DriftWall = ({
   );
 
   useEffect(() => {
+    if (!visible) return;
     const animate = (ts: number) => {
       if (lastTsRef.current === null) lastTsRef.current = ts;
       const dt = Math.min(0.05, Math.max(0, ts - lastTsRef.current) / 1000);
@@ -206,7 +210,7 @@ const DriftWall = ({
       rafRef.current = null;
       lastTsRef.current = null;
     };
-  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform]);
+  }, [visible, baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform]);
 
   const activate = useCallback((id: string, index: number): void => {
     activeIdRef.current = id;

@@ -1,4 +1,10 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
+import { observarVisibilidad } from '../../hooks/useEnVista';
+
+// Los colores se agrupan en pocos tonos para pintar cada grupo con un solo fill()
+const COLOR_BUCKETS = 6;
+// Mientras las partículas están quietas basta con ~30 fps
+const IDLE_FRAME_MS = 33;
 export interface ParticleTextProps {
   text?: string;
   particleSize?: number;
@@ -31,6 +37,7 @@ type Particle = {
   targetY: number;
   size: number;
   color: string;
+  bucket: number;
   seed: number;
   depth: number;
   delay: number;
@@ -84,7 +91,9 @@ const waitForFonts = async (font: string): Promise<void> => {
 
   try {
     await document.fonts.load(font);
-  } catch {}
+  } catch {
+    // Si la fuente no carga se usa la de respaldo
+  }
 
   await document.fonts.ready;
 };
@@ -132,6 +141,9 @@ const ParticleText = ({
     let width = 0;
     let height = 0;
     let dpr = 1;
+    let visible = false;
+    let lastDraw = 0;
+    let bucketColors: string[] = [color];
 
     const pointer = {
       active: false,
@@ -164,43 +176,22 @@ const ParticleText = ({
       gathering = true;
     };
 
-    const drawParticle = (particle: Particle): void => {
-      const size = particle.size;
-      ctx.fillStyle = particle.color;
-
-      if (size <= 2.1) {
-        ctx.fillRect(particle.x - size / 2, particle.y - size / 2, size, size);
-        return;
-      }
-
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
     const render = (now: number): void => {
       ctx.clearRect(0, 0, width, height);
-
-      if (glow && !reducedMotion) {
-        ctx.shadowBlur = particleSize * 3;
-        ctx.shadowColor = highlightColor;
-      } else {
-        ctx.shadowBlur = 0;
-      }
 
       pointer.smoothX += (pointer.x - pointer.smoothX) * 0.18;
       pointer.smoothY += (pointer.y - pointer.smoothY) * 0.18;
 
       let complete = true;
+      const paths = bucketColors.map(() => new Path2D());
 
-      particles.forEach(particle => {
+      for (const particle of particles) {
         let baseX = particle.targetX;
         let baseY = particle.targetY;
-        let progress = 1;
 
         if (gathering) {
           const local = (now - gatherStart - particle.delay) / Math.max(1, reducedMotion ? 1 : gatherDuration);
-          progress = clamp(local, 0, 1);
+          const progress = clamp(local, 0, 1);
           const eased = easeOutCubic(progress);
           baseX = particle.startX + (particle.targetX - particle.startX) * eased;
           baseY = particle.startY + (particle.targetY - particle.startY) * eased;
@@ -226,23 +217,47 @@ const ParticleText = ({
         particle.x += (baseX - particle.x) * follow;
         particle.y += (baseY - particle.y) * follow;
 
-        ctx.globalAlpha = clamp(0.35 + progress * 0.65, 0, 1);
-        drawParticle(particle);
-      });
+        const path = paths[particle.bucket];
+        const size = particle.size;
+        if (size <= 2.1) {
+          path.rect(particle.x - size / 2, particle.y - size / 2, size, size);
+        } else {
+          path.moveTo(particle.x + size / 2, particle.y);
+          path.arc(particle.x, particle.y, size / 2, 0, Math.PI * 2);
+        }
+      }
 
+      // Opacidad global durante la reunión de partículas (antes era una por partícula)
+      ctx.globalAlpha = gathering
+        ? clamp(0.35 + 0.65 * ((now - gatherStart) / Math.max(1, gatherDuration + stagger)), 0.35, 1)
+        : 1;
+      paths.forEach((path, i) => {
+        ctx.fillStyle = bucketColors[i];
+        ctx.fill(path);
+      });
       ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
 
       if (gathering && complete) {
         gathering = false;
       }
+    };
 
-      animationFrame = window.requestAnimationFrame(render);
+    // Solo anima mientras se ve; en reposo baja a ~30 fps
+    const loop = (now: number): void => {
+      animationFrame = null;
+      if (!visible) return;
+
+      const idle = !gathering && !pointer.active;
+      if (!idle || now - lastDraw >= IDLE_FRAME_MS) {
+        render(now);
+        lastDraw = now;
+      }
+      animationFrame = window.requestAnimationFrame(loop);
     };
 
     const ensureRenderLoop = (): void => {
-      if (animationFrame === null) {
-        animationFrame = window.requestAnimationFrame(render);
+      if (animationFrame === null && visible) {
+        animationFrame = window.requestAnimationFrame(loop);
       }
     };
 
@@ -321,17 +336,26 @@ const ParticleText = ({
         }
       }
 
-      const maxParticles = Math.max(900, Math.min(5200, Math.floor((width * height) / 90)));
+      // Menos partículas que antes (máx. 5200): el texto se lee igual y cuesta la mitad por frame
+      const area = (width * height) / (width < 640 ? 170 : 115);
+      const maxParticles = Math.max(600, Math.min(2600, Math.floor(area)));
       const stride = Math.max(1, Math.ceil(targets.length / maxParticles));
       const baseRgb = hexToRgb(color);
       const highlightRgb = hexToRgb(highlightColor);
       const selected = targets.filter((_, index) => index % stride === 0);
+      bucketColors =
+        baseRgb && highlightRgb
+          ? Array.from({ length: COLOR_BUCKETS }, (_, i) =>
+              rgbToCss(mixRgb(baseRgb, highlightRgb, i / (COLOR_BUCKETS - 1))),
+            )
+          : [color];
 
       particles = selected.map((target, index) => {
         const seed = ((index * 9301 + 49297) % 233280) / 233280;
         const depth = 0.45 + (((index * 233 + 97) % 1000) / 1000) * 0.9;
         const blend = baseRgb && highlightRgb ? clamp(target.x / Math.max(1, width) + (seed - 0.5) * 0.35, 0, 1) : 0;
-        const particleColor = baseRgb && highlightRgb ? rgbToCss(mixRgb(baseRgb, highlightRgb, blend)) : color;
+        const bucket = bucketColors.length > 1 ? Math.round(blend * (bucketColors.length - 1)) : 0;
+        const particleColor = bucketColors[bucket];
         const angle = seed * Math.PI * 2;
         const distance = (reducedMotion ? 0 : scatter) * (0.35 + depth * 0.75);
         const startX = target.x + Math.cos(angle) * distance + (seed - 0.5) * scatter * 0.45;
@@ -346,6 +370,7 @@ const ParticleText = ({
           targetY: target.y,
           size: Math.max(0.6, particleSize * (0.75 + target.alpha * 0.45)),
           color: particleColor,
+          bucket,
           seed,
           depth,
           delay: seed * stagger
@@ -412,11 +437,20 @@ const ParticleText = ({
 
     const resizeObserver = new ResizeObserver(queueSample);
     resizeObserver.observe(container);
+    const stopObserving = observarVisibilidad(container, (isVisible) => {
+      visible = isVisible;
+      if (visible) ensureRenderLoop();
+      else if (animationFrame !== null) {
+        window.cancelAnimationFrame(animationFrame);
+        animationFrame = null;
+      }
+    });
     void sampleText();
 
     return () => {
       buildId += 1;
       resizeObserver.disconnect();
+      stopObserving();
       reduceMotionQuery?.removeEventListener('change', handleReduceMotionChange);
       canvas.removeEventListener('pointerenter', handlePointerEnter);
       canvas.removeEventListener('pointermove', handlePointerMove);
@@ -452,7 +486,13 @@ const ParticleText = ({
       style={style}
       aria-label={text}
     >
-      <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden="true" />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 block h-full w-full"
+        aria-hidden="true"
+        // El brillo se aplica una vez al lienzo (antes era shadowBlur por cada partícula)
+        style={glow ? { filter: `drop-shadow(0 0 ${particleSize * 2}px ${highlightColor}59)` } : undefined}
+      />
       <span className="sr-only">{text}</span>
     </div>
   );

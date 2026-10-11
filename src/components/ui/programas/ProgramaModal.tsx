@@ -9,6 +9,7 @@ import {
   ListBox,
   Modal,
   Select,
+  toast,
 } from "@heroui/react";
 import { usePrograma } from "../../../hooks/usePrograma";
 
@@ -62,19 +63,31 @@ export const ProgramaModal = ({
     }
   }, [isEditing, selectedPrograma, isOpen]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.nombre.trim() || !formData.codigo.trim()) {
+      toast.danger("Datos incompletos", { description: "El nombre y el código son obligatorios." });
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       if (isEditing && selectedPrograma) {
         await updatePrograma(selectedPrograma.id, formData);
+        toast.success("Programa actualizado", { description: "Los cambios se guardaron correctamente." });
       } else {
         await createPrograma(formData);
+        toast.success("Programa creado", { description: "El programa quedó registrado." });
       }
 
       onClose();
-    } catch (error) {
-      console.error("Error al guardar:", error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.danger("Error", { description: error?.response?.data?.message || "No se pudo guardar el programa." });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -83,8 +96,8 @@ export const ProgramaModal = ({
   );
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Modal.Backdrop>
+    <Modal>
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <Modal.Container>
           <Modal.Dialog className="w-full sm:max-w-[500px]">
             <Modal.CloseTrigger />
@@ -214,7 +227,7 @@ export const ProgramaModal = ({
                   Cancelar
                 </Button>
 
-                <Button type="submit">
+                <Button type="submit" isPending={isSubmitting}>
                   {isEditing
                     ? "Guardar Cambios"
                     : "Crear Programa"}

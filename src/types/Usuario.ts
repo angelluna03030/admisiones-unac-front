@@ -11,6 +11,13 @@ export const createUsuarioSchema = z.object({
   correo: z.email('Correo inválido'),
   rol: rolUsuarioEnum,
   activo: z.boolean().default(true),
+  // Opcional: sin contraseña el usuario no puede iniciar sesión
+  password: z
+    .string()
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[A-Za-z]/, 'Debe tener al menos una letra')
+    .regex(/\d/, 'Debe tener al menos un número')
+    .optional(),
 });
 
 export type Usuario = {
@@ -20,6 +27,8 @@ export type Usuario = {
   correo: string;
   rol: z.infer<typeof rolUsuarioEnum>;
   activo: boolean;
+  tieneAcceso?: boolean;
+  ultimoAcceso?: string | null;
   createdAt: string;
 };
 

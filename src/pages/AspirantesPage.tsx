@@ -4,8 +4,11 @@ import { Button, Input } from '@heroui/react';
 import { TablaAspirantes } from '../components/ui/aspirantes/TablaAspirantes';
 import { AspiranteModal } from '../components/ui/aspirantes/AspiranteModal';
 import { useAspirante } from '../hooks/useAspirante';
+import { useAuthStore } from '../stores/authStore';
+import { puede } from '../utils/permisos';
 
 export const AspirantesPage = () => {
+  const rol = useAuthStore((state) => state.usuario?.rol);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { total, fetchAspirantes, setSelectedAspirante } = useAspirante();
@@ -34,7 +37,9 @@ export const AspirantesPage = () => {
             <p className="text-default-500 text-sm mt-0.5">Gestiona la información de los aspirantes registrados. <span className="ml-1 text-default-400">· {total} registrados</span></p>
           </div>
         </div>
-        <Button onPress={handleOpenCreate}> <UserPlus size={18} /> Nuevo Aspirante</Button>
+        {puede(rol, 'aspirantes') && (
+          <Button onPress={handleOpenCreate}> <UserPlus size={18} /> Nuevo Aspirante</Button>
+        )}
       </div>
 
       <div className="bg-default-50 p-4 rounded-xl border border-default-200">
@@ -42,10 +47,21 @@ export const AspirantesPage = () => {
       </div>
 
       <div className="bg-background rounded-xl border border-default-200 p-4">
-        <TablaAspirantes />
+        <TablaAspirantes
+          onEdit={(aspirante) => {
+            setSelectedAspirante(aspirante);
+            setIsModalOpen(true);
+          }}
+        />
       </div>
 
-      <AspiranteModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AspiranteModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedAspirante(null);
+        }}
+      />
     </div>
   );
 };

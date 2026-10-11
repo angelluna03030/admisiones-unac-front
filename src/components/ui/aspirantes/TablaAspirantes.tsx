@@ -9,6 +9,7 @@ import {
   Table,
 } from "@heroui/react";
 import { useAspirante } from "../../../hooks/useAspirante";
+import type { Aspirante } from "../../../types/Aspirante";
 
 const columns = [
   { id: "documento", name: "Documento" },
@@ -19,14 +20,17 @@ const columns = [
   { id: "acciones", name: "Acciones" },
 ];
 
-export const TablaAspirantes = () => {
+interface TablaAspirantesProps {
+  onEdit: (aspirante: Aspirante) => void;
+}
+
+export const TablaAspirantes = ({ onEdit }: TablaAspirantesProps) => {
   const {
     aspirantes,
     total,
     page,
     limit,
     fetchAspirantes,
-    setSelectedAspirante,
   } = useAspirante();
 
   useEffect(() => {
@@ -113,9 +117,7 @@ export const TablaAspirantes = () => {
                       size="sm"
                       variant="secondary"
                       aria-label={`Editar ${aspirante.nombres} ${aspirante.apellidos}`}
-                      onPress={() =>
-                        setSelectedAspirante(aspirante)
-                      }
+                      onPress={() => onEdit(aspirante)}
                     >
                       <Edit size={16} />
                     </Button>

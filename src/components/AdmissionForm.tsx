@@ -10,7 +10,7 @@ import {
   TextField,
 } from "@heroui/react";
 import { usePrograma } from "../hooks/usePrograma"; 
-import { aspiranteApi } from "../api/aspirante";   
+import { apiClient } from "../api/apiClient";
 import ScrollExpand, { type ScrollExpandItem } from "./ui/ScrollExpand";
 
 const STEPS: ScrollExpandItem[] = [
@@ -68,8 +68,8 @@ export default function AdmissionForm() {
   const { programas, fetchProgramas } = usePrograma();
 
   useEffect(() => {
-  fetchProgramas({ page: 1, limit: 100 }); // o el límite que uses
-}, []);
+    fetchProgramas({ page: 1, limit: 100 });
+  }, [fetchProgramas]);
   const handleChange = (field: keyof FormState) => (value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -79,18 +79,16 @@ export default function AdmissionForm() {
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      // Endpoint público: crea (o reutiliza) el aspirante y abre su solicitud en el programa elegido
+      await apiClient.post("/api/public/preinscripcion", {
         nombres: form.nombres,
         apellidos: form.apellidos,
         tipoDocumento: form.tipoDocumento,
         numeroDocumento: form.numeroDocumento,
         correo: form.email,
         telefono: form.phone,
-        direccion: `Interesado en programa ID: ${form.programaId}`, 
-        ciudad: "Pre-inscripción Web",
-      };
-
-      await aspiranteApi.create(payload);
+        programaId: form.programaId,
+      });
       
       setIsModalOpen(true);
       setForm(INITIAL_STATE);

@@ -35,7 +35,7 @@ const items = [
 export const Vida = () => {
   return (
     <>
-      <section id="#vida" className="bg-navy-900 px-6 py-24 md:px-12">
+      <section id="vida" className="bg-navy-900 px-6 py-24 md:px-12">
         <div style={{ height: 600 }}>
           <DriftWall
             items={items}

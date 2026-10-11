@@ -7,6 +7,7 @@ import {
   Input,
   Label,
   Modal,
+  toast,
 } from "@heroui/react";
 import { useAspirante } from "../../../hooks/useAspirante";
 
@@ -21,7 +22,6 @@ export const AspiranteModal = ({
 }: AspiranteModalProps) => {
   const {
     selectedAspirante,
-    setSelectedAspirante,
     createAspirante,
     updateAspirante,
   } = useAspirante();
@@ -74,38 +74,37 @@ export const AspiranteModal = ({
     }
   }, [isEditing, selectedAspirante, isOpen]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.nombres.trim() || !formData.apellidos.trim() || !formData.numeroDocumento.trim() || !formData.correo.trim()) {
+      toast.danger("Datos incompletos", { description: "Nombres, apellidos, documento y correo son obligatorios." });
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       if (isEditing && selectedAspirante) {
-        await updateAspirante(
-          selectedAspirante.id,
-          formData
-        );
+        await updateAspirante(selectedAspirante.id, formData);
+        toast.success("Aspirante actualizado", { description: "Los cambios se guardaron correctamente." });
       } else {
         await createAspirante(formData);
+        toast.success("Aspirante creado", { description: "El aspirante quedó registrado." });
       }
 
       onClose();
-
-      // Limpia el aspirante seleccionado después de guardar
-      setSelectedAspirante(null);
-    } catch (error) {
-      console.error("Error al guardar:", error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.danger("Error", { description: error?.response?.data?.message || "No se pudo guardar el aspirante." });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-    >
-      <Modal.Backdrop>
+    <Modal>
+      <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <Modal.Container>
           <Modal.Dialog className="w-full sm:max-w-[700px]">
             <Modal.CloseTrigger />
@@ -311,7 +310,7 @@ export const AspiranteModal = ({
                   Cancelar
                 </Button>
 
-                <Button type="submit">
+                <Button type="submit" isPending={isSubmitting}>
                   {isEditing
                     ? "Guardar Cambios"
                     : "Crear Aspirante"}
